@@ -41,3 +41,6 @@ yarn-error.log*
 next-env.d.ts
 # drizzle
 /drizzle
+
+# kiro settings with secrets
+.kiro/settings/mcp.json
