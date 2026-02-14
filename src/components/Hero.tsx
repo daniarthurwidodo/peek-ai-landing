@@ -1,7 +1,21 @@
+import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
+
 export default function Hero() {
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-black py-20 sm:py-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
+        <div className="absolute top-4 right-6 lg:right-8">
+          <SignedOut>
+            <SignInButton mode="modal">
+              <button className="rounded-full bg-blue-600 px-6 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors">
+                Sign In
+              </button>
+            </SignInButton>
+          </SignedOut>
+          <SignedIn>
+            <UserButton />
+          </SignedIn>
+        </div>
         <div className="mx-auto max-w-2xl text-center">
           <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-6xl">
             Ace Your Interviews with AI
