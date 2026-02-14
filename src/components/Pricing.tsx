@@ -1,3 +1,25 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useUser } from '@clerk/nextjs';
+
+declare global {
+  interface Window {
+    Paddle?: {
+      Environment: {
+        set: (env: string) => void;
+      };
+      Initialize: (config: { token: string }) => void;
+      Checkout: {
+        open: (options: {
+          items: Array<{ priceId: string; quantity: number }>;
+          customer?: { email?: string };
+        }) => void;
+      };
+    };
+  }
+}
+
 const features = [
   'Unlimited AI mock interviews',
   'Real-time feedback and analysis',
@@ -8,6 +30,55 @@ const features = [
 ];
 
 export default function Pricing() {
+  const { user } = useUser();
+  const [paddleLoaded, setPaddleLoaded] = useState(false);
+
+  useEffect(() => {
+    const initPaddle = () => {
+      if (!window.Paddle) return;
+
+      const clientToken = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
+      if (!clientToken) {
+        console.error('Paddle client token not configured');
+        return;
+      }
+
+      const environment = process.env.NEXT_PUBLIC_PADDLE_ENVIRONMENT || 'sandbox';
+      window.Paddle.Environment.set(environment);
+      window.Paddle.Initialize({
+        token: clientToken,
+      });
+      setPaddleLoaded(true);
+    };
+
+    if (window.Paddle) {
+      initPaddle();
+    } else {
+      const script = document.querySelector('script[src*="paddle"]');
+      script?.addEventListener('load', initPaddle);
+    }
+  }, []);
+
+  const handleCheckout = () => {
+    if (!window.Paddle || !paddleLoaded) {
+      console.error('Paddle is not loaded yet');
+      return;
+    }
+
+    const priceId = process.env.NEXT_PUBLIC_PADDLE_PRICE_ID;
+    if (!priceId) {
+      console.error('Price ID not configured');
+      return;
+    }
+
+    window.Paddle.Checkout.open({
+      items: [{ priceId: priceId, quantity: 1 }],
+      customer: user?.primaryEmailAddress?.emailAddress
+        ? { email: user.primaryEmailAddress.emailAddress }
+        : undefined,
+    });
+  };
+
   return (
     <section id="pricing" className="bg-gray-50 dark:bg-gray-900 py-24 sm:py-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -40,7 +111,11 @@ export default function Pricing() {
                 </li>
               ))}
             </ul>
-            <button className="mt-8 w-full rounded-full bg-blue-600 px-6 py-3 text-center text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors">
+            <button
+              onClick={handleCheckout}
+              disabled={!paddleLoaded}
+              className="mt-8 w-full rounded-full bg-blue-600 px-6 py-3 text-center text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               Start your free trial
             </button>
             <p className="mt-4 text-xs text-center text-gray-500 dark:text-gray-400">
