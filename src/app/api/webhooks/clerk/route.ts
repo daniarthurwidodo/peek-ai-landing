@@ -49,6 +49,15 @@ export async function POST(req: Request) {
       firstName: first_name,
       lastName: last_name,
       imageUrl: image_url,
+    }).onConflictDoUpdate({
+      target: users.email,
+      set: {
+        clerkId: id,
+        firstName: first_name,
+        lastName: last_name,
+        imageUrl: image_url,
+        updatedAt: new Date(),
+      },
     });
   }
 
